@@ -1,174 +1,74 @@
-// Datenstruktur
-const exercises = [
-  {
-    nr: "I",
-    side: "LINKS", // Punkt 4: Ausgeschrieben
-    title: "Seitliches Beinheben im Liegen",
-    category: "Hüftabduktion / Gluteus Medius",
-    umfang: "20 WH",
-    durationSec: 30,
-    gif: "assets/gifs/1.gif",
-    hint: "Mit Widerstandsband um die Sprunggelenke"
-  },
-  {
-    nr: "II",
-    side: "RECHTS", // Punkt 4: Ausgeschrieben
-    title: "Seitliches Beinheben im Liegen",
-    category: "Hüftabduktion / Gluteus Medius",
-    umfang: "20 WH",
-    durationSec: 30,
-    gif: "assets/gifs/2.gif",
-    hint: "Mit Widerstandsband um die Sprunggelenke"
-  }
-];
-
-let currentIndex = 0;
-let timer = null;
-let currentSeconds = 0;
-let totalSeconds = 0;
-let isPausePhase = false;
-
-// DOM Elemente
-const overlay = document.getElementById('start-overlay');
-const btnOverlayPlay = document.getElementById('btn-overlay-play');
-const overlayRingContent = document.getElementById('overlay-ring-content');
-const overlayProgressCircle = document.getElementById('overlay-progress-circle');
-
-const timerProgressCircle = document.getElementById('timer-progress-circle');
-const timerDisplay = document.getElementById('timer-display');
-
-const elNr = document.getElementById('exercise-nr');
-const elSide = document.getElementById('exercise-side');
-const elTitle = document.getElementById('exercise-title');
-const elCategory = document.getElementById('exercise-category');
-const elUmfang = document.getElementById('exercise-umfang');
-const elGif = document.getElementById('exercise-gif');
-const elHint = document.getElementById('exercise-hint');
-const elNextTitle = document.getElementById('next-title');
-
-const btnPlay = document.getElementById('btn-play');
-const btnPrev = document.getElementById('btn-prev');
-const btnNext = document.getElementById('btn-next');
-
-// Ring-Berechnung (Radius = 52 -> Umfang ≈ 326.72)
-const CIRCUMFERENCE = 2 * Math.PI * 52;
-
-function setCircleProgress(circle, percentage) {
-  const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
-  circle.style.strokeDashoffset = offset;
-}
-
-function loadExercise(index) {
-  const ex = exercises[index];
-  elNr.textContent = ex.nr;
-  elSide.textContent = ex.side ? `SEITE: ${ex.side}` : '';
-  elTitle.textContent = ex.title;
-  elCategory.textContent = ex.category;
-  elUmfang.textContent = ex.umfang;
-  elGif.src = ex.gif;
-  elHint.textContent = ex.hint;
-
-  const nextEx = exercises[index + 1];
-  elNextTitle.textContent = nextEx ? `${nextEx.title} ${nextEx.side ? '(' + nextEx.side + ')' : ''}` : 'Workout Ende';
-
-  totalSeconds = ex.durationSec;
-  currentSeconds = totalSeconds;
-  updateTimerUI();
-}
-
-function updateTimerUI() {
-  const mins = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
-  const secs = (currentSeconds % 60).toString().padStart(2, '0');
-  timerDisplay.textContent = `${mins}:${secs}`;
-  
-  const progress = currentSeconds / totalSeconds;
-  setCircleProgress(timerProgressCircle, progress);
-}
-
-function startWorkoutSequence() {
-  overlay.classList.add('hidden');
-  isPausePhase = false;
-  runExerciseTimer();
-}
-
-function runExerciseTimer() {
-  clearInterval(timer);
-  setCircleProgress(timerProgressCircle, 1);
-  
-  timer = setInterval(() => {
-    currentSeconds--;
-    updateTimerUI();
-
-    if (currentSeconds <= 0) {
-      clearInterval(timer);
-      if (currentIndex < exercises.length - 1) {
-        startPausePhase(20); // Punkt 1: 20 Sek Pause
-      } else {
-        alert("Workout beendet!");
-      }
-    }
-  }, 1000);
-}
-
-function startPausePhase(pauseDuration) {
-  isPausePhase = true;
-  let remainingPause = pauseDuration;
-  
-  // Overlay für Pause anzeigen & Ring-Inhalt anpassen
-  overlayRingContent.innerHTML = `
-    <div style="text-align:center;">
-      <div class="pause-label">PAUSE</div>
-      <div class="pause-countdown-text">${remainingPause}</div>
-    </div>
-  `;
-  setCircleProgress(overlayProgressCircle, 1);
-  overlay.classList.remove('hidden');
-
-  timer = setInterval(() => {
-    remainingPause--;
-    const countEl = overlayRingContent.querySelector('.pause-countdown-text');
-    if (countEl) countEl.textContent = remainingPause;
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RunningWorkout">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <title>Running Workout App</title>
+</head>
+<body>
+  <div class="app-container">
     
-    setCircleProgress(overlayProgressCircle, remainingPause / pauseDuration);
+    <!-- Start Overlay (Punkt 1) -->
+    <div id="start-overlay" class="start-overlay">
+      <div class="ring-container play-ring" id="overlay-ring-container">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle class="progress-ring__circle-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="progress-ring__circle" id="overlay-progress-circle" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="ring-content" id="overlay-ring-content">
+          <button id="btn-overlay-play" class="play-btn">▶</button>
+        </div>
+      </div>
+    </div>
 
-    if (remainingPause <= 0) {
-      clearInterval(timer);
-      currentIndex++;
-      loadExercise(currentIndex);
-      overlay.classList.add('hidden');
+    <!-- Main App UI -->
+    <header class="top-bar">
+      <div class="roman-num" id="exercise-nr">I</div>
       
-      // Overlay-Inhalt für nächsten Reset zurücksetzen
-      overlayRingContent.appendChild(btnOverlayPlay);
-      runExerciseTimer();
-    }
-  }, 1000);
-}
+      <!-- Timer-Ring-Container (Punkt 5) -->
+      <div class="ring-container timer-ring">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle class="progress-ring__circle-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="progress-ring__circle" id="timer-progress-circle" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="ring-content">
+          <div class="timer-display" id="timer-display">00:30</div>
+        </div>
+      </div>
 
-// Event-Listener
-btnOverlayPlay.addEventListener('click', startWorkoutSequence);
-btnPlay.addEventListener('click', () => {
-  if (overlay.classList.contains('hidden')) {
-    startWorkoutSequence();
-  }
-});
+      <div class="reps-badge" id="exercise-umfang">20 WH</div>
+    </header>
 
-btnNext.addEventListener('click', () => {
-  if (currentIndex < exercises.length - 1) {
-    clearInterval(timer);
-    currentIndex++;
-    loadExercise(currentIndex);
-    if (overlay.classList.contains('hidden')) runExerciseTimer();
-  }
-});
+    <main class="content-body">
+      <div class="side-indicator" id="exercise-side">SEITE: LINKS</div>
+      <h1 class="exercise-title" id="exercise-title">Seitliches Beinheben im Liegen</h1>
+      <p class="exercise-category" id="exercise-category">Hüftabduktion / Gluteus Medius</p>
 
-btnPrev.addEventListener('click', () => {
-  if (currentIndex > 0) {
-    clearInterval(timer);
-    currentIndex--;
-    loadExercise(currentIndex);
-    if (overlay.classList.contains('hidden')) runExerciseTimer();
-  }
-});
+      <div class="media-card">
+        <img id="exercise-gif" src="assets/gifs/1.gif" alt="Übungsausführung" onerror="this.src='https://via.placeholder.com/400x400?text=GIF+Platzhalter'">
+      </div>
 
-// Initiale Ladung
-loadExercise(currentIndex);
+      <p class="exercise-hint" id="exercise-hint">Mit Widerstandsband um die Sprunggelenke</p>
+    </main>
+
+    <footer class="bottom-bar">
+      <div class="next-preview">
+        <span>Nächste Übung:</span>
+        <strong id="next-title">Seitliches Beinheben im Liegen (R)</strong>
+      </div>
+      <div class="controls">
+        <button id="btn-prev" class="btn-secondary">◄</button>
+        <button id="btn-play" class="btn-primary">START</button>
+        <button id="btn-next" class="btn-secondary">►</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

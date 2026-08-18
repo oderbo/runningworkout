@@ -55,79 +55,167 @@ const exercises = [
   {"nr": "LIV", "satz": "1. Satz", "seite": "L", "titel": "Adduktorendehnung im Seitstütz", "kategorie": "Beininnenseite / Adduktoren", "umfang": "30 Sek", "hinweis": "Statische Dehnung im Seitstütz halten", "dauer": 30, "id": 15},
   {"nr": "LV", "satz": "1. Satz", "seite": "R", "titel": "Adduktorendehnung im Seitstütz", "kategorie": "Beininnenseite / Adduktoren", "umfang": "30 Sek", "hinweis": "Statische Dehnung im Seitstütz halten", "dauer": 30, "id": 15},
   {"nr": "LVI", "satz": "2. Satz", "seite": "L", "titel": "Adduktorendehnung in Rückenlage", "kategorie": "Hüftöffnung & Mobilisation", "umfang": "10 WH", "hinweis": "Kontrolliertes Abspreizen im Liegen", "dauer": 30, "id": 13},
-  {"nr": "LVII", "satz": "2. Satz", "seite": "R", "titel": "Adduktorendehnung in Rückenlage", "kategorie": "Hüftöffnung & Mobilisation", "umfang": "10 WH", "hinweis": "Kontrolliertes Abspreizen im Liegen", "dauer": 30, "id": 13},
+  {"nr": "LVIII", "satz": "2. Satz", "seite": "R", "titel": "Adduktorendehnung in Rückenlage", "kategorie": "Hüftöffnung & Mobilisation", "umfang": "10 WH", "hinweis": "Kontrolliertes Abspreizen im Liegen", "dauer": 30, "id": 13},
   {"nr": "LVIII", "satz": "2. Satz", "seite": "L", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "id": 14},
   {"nr": "LIX", "satz": "2. Satz", "seite": "R", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "id": 14}
 ];
 
 let currentIndex = 0;
 let timer = null;
-let timeLeft = 0;
-let isRunning = false;
+let currentSeconds = 0;
+let totalSeconds = 0;
 
-function renderExercise() {
-  const ex = exercises[currentIndex];
-  document.getElementById('exercise-nr').textContent = ex.nr;
-  document.getElementById('exercise-umfang').textContent = ex.umfang;
-  document.getElementById('exercise-side').textContent = `SEITE: ${ex.seite}`;
-  document.getElementById('exercise-title').textContent = ex.titel;
-  document.getElementById('exercise-category').textContent = `${ex.satz !== 'nan' ? ex.satz + ' • ' : ''}${ex.kategorie}`;
-  document.getElementById('exercise-hint').textContent = ex.hinweis;
-  document.getElementById('exercise-gif').src = `assets/gifs/${ex.id}.gif`;
+// DOM Elemente
+const overlay = document.getElementById('start-overlay');
+const btnOverlayPlay = document.getElementById('btn-overlay-play');
+const overlayRingContent = document.getElementById('overlay-ring-content');
+const overlayProgressCircle = document.getElementById('overlay-progress-circle');
 
-  const nextEx = exercises[currentIndex + 1];
-  document.getElementById('next-title').textContent = nextEx ? `${nextEx.titel} (${nextEx.seite})` : 'Training Beendet!';
+const timerProgressCircle = document.getElementById('timer-progress-circle');
+const timerDisplay = document.getElementById('timer-display');
 
-  resetTimer(ex.dauer);
+const elNr = document.getElementById('exercise-nr');
+const elSide = document.getElementById('exercise-side');
+const elTitle = document.getElementById('exercise-title');
+const elCategory = document.getElementById('exercise-category');
+const elUmfang = document.getElementById('exercise-umfang');
+const elGif = document.getElementById('exercise-gif');
+const elHint = document.getElementById('exercise-hint');
+const elNextTitle = document.getElementById('next-title');
+
+const btnPlay = document.getElementById('btn-play');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+
+// Ring-Umfang für Radius 52
+const CIRCUMFERENCE = 2 * Math.PI * 52;
+
+function setCircleProgress(circle, percentage) {
+  const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
+  circle.style.strokeDashoffset = offset;
 }
 
-function resetTimer(duration) {
+// Wandelt Seitenkürzel 'L'/'R' in 'LINKS'/'RECHTS' um
+function formatSideText(seite) {
+  if (seite === 'L') return 'LINKS';
+  if (seite === 'R') return 'RECHTS';
+  return seite.toUpperCase();
+}
+
+function loadExercise(index) {
+  const ex = exercises[index];
+  elNr.textContent = ex.nr;
+  elSide.textContent = ex.seite ? `SEITE: ${formatSideText(ex.seite)}` : '';
+  elTitle.textContent = ex.titel;
+  elCategory.textContent = `${ex.satz && ex.satz !== 'nan' ? ex.satz + ' • ' : ''}${ex.kategorie}`;
+  elUmfang.textContent = ex.umfang;
+  elGif.src = `assets/gifs/${ex.id}.gif`;
+  elHint.textContent = ex.hinweis;
+
+  const nextEx = exercises[index + 1];
+  elNextTitle.textContent = nextEx 
+    ? `${nextEx.titel} (${formatSideText(nextEx.seite)})` 
+    : 'Training beendet!';
+
+  totalSeconds = ex.dauer;
+  currentSeconds = totalSeconds;
+  updateTimerUI();
+}
+
+function updateTimerUI() {
+  const mins = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
+  const secs = (currentSeconds % 60).toString().padStart(2, '0');
+  timerDisplay.textContent = `${mins}:${secs}`;
+  
+  const progress = totalSeconds > 0 ? currentSeconds / totalSeconds : 0;
+  setCircleProgress(timerProgressCircle, progress);
+}
+
+function startWorkoutSequence() {
+  overlay.classList.add('hidden');
+  runExerciseTimer();
+}
+
+function runExerciseTimer() {
   clearInterval(timer);
-  isRunning = false;
-  timeLeft = duration;
-  document.getElementById('btn-play').textContent = 'START';
-  updateTimerDisplay();
-}
+  setCircleProgress(timerProgressCircle, 1);
+  
+  timer = setInterval(() => {
+    currentSeconds--;
+    updateTimerUI();
 
-function updateTimerDisplay() {
-  const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-  const sec = String(timeLeft % 60).padStart(2, '0');
-  document.getElementById('timer-display').textContent = `${min}:${sec}`;
-}
-
-document.getElementById('btn-play').addEventListener('click', () => {
-  if (isRunning) {
-    clearInterval(timer);
-    isRunning = false;
-    document.getElementById('btn-play').textContent = 'FORTSETZEN';
-  } else {
-    isRunning = true;
-    document.getElementById('btn-play').textContent = 'PAUSE';
-    timer = setInterval(() => {
-      if (timeLeft > 0) {
-        timeLeft--;
-        updateTimerDisplay();
+    if (currentSeconds <= 0) {
+      clearInterval(timer);
+      if (currentIndex < exercises.length - 1) {
+        startPausePhase(20); // 20 Sekunden Pause zwischen Übungen
       } else {
-        clearInterval(timer);
-        isRunning = false;
-        document.getElementById('btn-play').textContent = 'START';
+        alert("Workout beendet!");
       }
-    }, 1000);
+    }
+  }, 1000);
+}
+
+function startPausePhase(pauseDuration) {
+  let remainingPause = pauseDuration;
+  
+  // Overlay als Pause-Bildschirm konfigurieren
+  overlayRingContent.innerHTML = `
+    <div style="text-align:center;">
+      <div class="pause-label">PAUSE</div>
+      <div class="pause-countdown-text">${remainingPause}</div>
+    </div>
+  `;
+  setCircleProgress(overlayProgressCircle, 1);
+  overlay.classList.remove('hidden');
+
+  timer = setInterval(() => {
+    remainingPause--;
+    const countEl = overlayRingContent.querySelector('.pause-countdown-text');
+    if (countEl) countEl.textContent = remainingPause;
+    
+    setCircleProgress(overlayProgressCircle, remainingPause / pauseDuration);
+
+    if (remainingPause <= 0) {
+      clearInterval(timer);
+      currentIndex++;
+      loadExercise(currentIndex);
+      overlay.classList.add('hidden');
+      
+      // Overlay zurück auf Play-Button setzen für spätere Resets
+      overlayRingContent.innerHTML = '';
+      overlayRingContent.appendChild(btnOverlayPlay);
+      
+      runExerciseTimer();
+    }
+  }, 1000);
+}
+
+// Event-Listener
+btnOverlayPlay.addEventListener('click', startWorkoutSequence);
+
+btnPlay.addEventListener('click', () => {
+  if (overlay.classList.contains('hidden')) {
+    startWorkoutSequence();
   }
 });
 
-document.getElementById('btn-next').addEventListener('click', () => {
+btnNext.addEventListener('click', () => {
   if (currentIndex < exercises.length - 1) {
+    clearInterval(timer);
     currentIndex++;
-    renderExercise();
+    loadExercise(currentIndex);
+    if (overlay.classList.contains('hidden')) runExerciseTimer();
   }
 });
 
-document.getElementById('btn-prev').addEventListener('click', () => {
+btnPrev.addEventListener('click', () => {
   if (currentIndex > 0) {
+    clearInterval(timer);
     currentIndex--;
-    renderExercise();
+    loadExercise(currentIndex);
+    if (overlay.classList.contains('hidden')) runExerciseTimer();
   }
 });
 
-renderExercise();
+// Start-Zustand laden
+loadExercise(currentIndex);
