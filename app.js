@@ -101,22 +101,18 @@ if (!gifCanvas) {
 // Exakter mathematischer Umfang für Radius r = 68 (2 * pi * 68 ≈ 427.26)
 const CIRCUMFERENCE = 2 * Math.PI * 68; 
 
-// SVG-Kreis initialisieren, damit er zu Beginn voll ist
+// SVG-Kreis initialisieren, damit er zu Beginn absolut voll ist
 if (timerProgressCircle) {
   timerProgressCircle.style.strokeDasharray = CIRCUMFERENCE;
   timerProgressCircle.style.strokeDashoffset = 0;
 }
 
-// Helper: GIF Standbild erzeugen (Freeze)
-function freezeGif() {
-  if (elGif.complete && elGif.naturalWidth > 0) {
-    gifCanvas.width = elGif.naturalWidth || elGif.clientWidth;
-    gifCanvas.height = elGif.naturalHeight || elGif.clientHeight;
-    const ctx = gifCanvas.getContext('2d');
-    ctx.drawImage(elGif, 0, 0, gifCanvas.width, gifCanvas.height);
-    gifCanvas.style.display = 'block';
-    elGif.style.display = 'none';
-  }
+function setCircleProgress(remainingSeconds, maxSeconds, circleElement) {
+  if (!circleElement) return;
+  // Exakte proportionale Berechnung: Bei vollen Sekunden ist offset = 0 (voll), bei 0 Sekunden = CIRCUMFERENCE (leer)
+  const progress = maxSeconds > 0 ? (remainingSeconds / maxSeconds) : 0;
+  const offset = CIRCUMFERENCE * (1 - progress);
+  circleElement.style.strokeDashoffset = Math.max(0, Math.min(CIRCUMFERENCE, offset));
 }
 
 // Helper: GIF Animation fortsetzen (Unfreeze)
