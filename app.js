@@ -29,7 +29,7 @@ const exercises = [
   {"nr": "XXVIII", "satz": "2. Satz", "seite": "R", "titel": "Einbeinige Kniebeuge an der Wand", "kategorie": "Exzentrische Quad-Kraft / Knie", "umfang": "15 WH", "hinweis": "Kontrollierte Kniebeuge an Wand", "dauer": 30, "id": 70},
   {"nr": "XXIX", "satz": "2. Satz", "seite": "Beide", "titel": "Beinbeugen im Liegen (Hamstring Curls)", "kategorie": "Beinbeuger (Hamstrings)", "umfang": "20 WH", "hinweis": "Mit Widerstandsband um Fersen", "dauer": 30, "id": 8},
   {"nr": "XXX", "satz": "2. Satz", "seite": "Beide", "titel": "Soleus-Heber (Wadenheben gebeugt)", "kategorie": "Tiefe Wadenmuskulatur (Soleus)", "umfang": "20 WH", "hinweis": "An Wand gelehnt mit gebeugtem Knie", "dauer": 30, "id": 9},
-  {"nr": "XXXI", "satz": "2. Satz", "seite": "Beide", "titel": "Tibialisheber (Schienbeinheber)", "kategorie": "Schienbein (Tibialis Anterior)", "umfang": "20 WH", "hinweis": "An Wand gelehnt, Fußspitzen hochziehen", "dauer": 30, "id": 10},
+  {"nr": "XXX1", "satz": "2. Satz", "seite": "Beide", "titel": "Tibialisheber (Schienbeinheber)", "kategorie": "Schienbein (Tibialis Anterior)", "umfang": "20 WH", "hinweis": "An Wand gelehnt, Fußspitzen hochziehen", "dauer": 30, "id": 10},
   {"nr": "XXXII", "satz": "2. Satz", "seite": "Beide", "titel": "Wadenheber (Wadenheben gestreckt)", "kategorie": "Oberflächliche Wade (Gastrocnemius)", "umfang": "20 WH", "hinweis": "An Wand gelehnt mit gestrecktem Knie", "dauer": 30, "id": 11},
   {"nr": "XXXIII", "satz": "2. Satz", "seite": "L", "titel": "Isometrischer Split-Squat Hold", "kategorie": "Spezifische Kraft & Kniestabilität", "umfang": "45 Sek", "hinweis": "Tiefen Ausfallschritt statisch halten", "dauer": 45, "id": 12},
   {"nr": "XXXIV", "satz": "2. Satz", "seite": "R", "titel": "Isometrischer Split-Squat Hold", "kategorie": "Spezifische Kraft & Kniestabilität", "umfang": "45 Sek", "hinweis": "Tiefen Ausfallschritt statisch halten", "dauer": 45, "id": 12},
@@ -70,7 +70,10 @@ let isBreak = false;
 // DOM Elemente
 const overlay = document.getElementById('start-overlay');
 const btnOverlayPlay = document.getElementById('btn-overlay-play');
-const mainTimerBox = document.getElementById('main-timer-box');
+const pauseInfo = document.getElementById('pause-info');
+const pauseCountdown = document.getElementById('pause-countdown');
+const overlayProgressCircle = document.getElementById('overlay-progress-circle');
+
 const timerProgressCircle = document.getElementById('timer-progress-circle');
 const timerDisplay = document.getElementById('timer-display');
 
@@ -80,13 +83,24 @@ const elTitle = document.getElementById('exercise-title');
 const elCategory = document.getElementById('exercise-category');
 const elUmfang = document.getElementById('exercise-umfang');
 const elGif = document.getElementById('exercise-gif');
-const gifCanvas = document.getElementById('gif-canvas');
 const elHint = document.getElementById('exercise-hint');
 const elNextTitle = document.getElementById('next-title');
 
 const btnPlay = document.getElementById('btn-play');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
+
+// Canvas dynamisch erzeugen, falls im HTML nicht vorhanden
+let gifCanvas = document.getElementById('gif-canvas');
+if (!gifCanvas) {
+  gifCanvas = document.createElement('canvas');
+  gifCanvas.id = 'gif-canvas';
+  gifCanvas.style.display = 'none';
+  gifCanvas.style.width = '100%';
+  gifCanvas.style.height = '100%';
+  gifCanvas.style.objectFit = 'cover';
+  elGif.parentNode.insertBefore(gifCanvas, elGif.nextSibling);
+}
 
 const CIRCUMFERENCE = 2 * Math.PI * 52; // 326.72
 
@@ -114,9 +128,10 @@ function formatSideText(seite) {
   return seite ? seite.toUpperCase() : '';
 }
 
-function setCircleProgress(percentage) {
+function setCircleProgress(percentage, circleElement) {
+  if (!circleElement) return;
   const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
-  timerProgressCircle.style.strokeDashoffset = offset;
+  circleElement.style.strokeDashoffset = offset;
 }
 
 function loadExercise(index) {
@@ -130,11 +145,11 @@ function loadExercise(index) {
 
   // Spiegeln wenn Seite: R
   if (ex.seite === 'R') {
-    elGif.classList.add('flipped');
-    gifCanvas.classList.add('flipped');
+    elGif.style.transform = 'scaleX(-1)';
+    gifCanvas.style.transform = 'scaleX(-1)';
   } else {
-    elGif.classList.remove('flipped');
-    gifCanvas.classList.remove('flipped');
+    elGif.style.transform = 'none';
+    gifCanvas.style.transform = 'none';
   }
 
   elGif.src = `assets/gifs/${ex.id}.gif`;
@@ -149,15 +164,23 @@ function loadExercise(index) {
   
   // Im angehaltenen Zustand laden
   pauseExerciseState();
+  updateTimerDisplay(); // Anzeige direkt aktualisieren
 }
 
 function updateTimerDisplay() {
   const mins = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
   const secs = (currentSeconds % 60).toString().padStart(2, '0');
-  timerDisplay.textContent = `${mins}:${secs}`;
-  
   const progress = totalSeconds > 0 ? currentSeconds / totalSeconds : 0;
-  setCircleProgress(progress);
+
+  if (isBreak) {
+    // Wenn Pause, aktualisiere den Overlay-Ring
+    pauseCountdown.textContent = `${mins}:${secs}`;
+    setCircleProgress(progress, overlayProgressCircle);
+  } else {
+    // Wenn Übung läuft, aktualisiere den kleinen Timer in der Header-Leiste
+    timerDisplay.textContent = `${mins}:${secs}`;
+    setCircleProgress(progress, timerProgressCircle);
+  }
 }
 
 // Zustand: Übung LÄUFT
@@ -168,10 +191,10 @@ function startExerciseState() {
   overlay.classList.add('hidden');
   unfreezeGif();
 
-  // Timer: Grün / Button: Gelb (PAUSE)
-  mainTimerBox.className = 'timer-box state-green';
-  btnPlay.className = 'btn-main-yellow';
+  // Button: Gelb (PAUSE)
   btnPlay.textContent = 'PAUSE';
+  btnPlay.style.backgroundColor = '#eab308'; // Gelb
+  btnPlay.style.color = '#000';
 
   clearInterval(timer);
   timer = setInterval(() => {
@@ -189,35 +212,46 @@ function startExerciseState() {
   }, 1000);
 }
 
-// Zustand: Übung PAUSIERT
+// Zustand: Übung PAUSIERT (Manuelle Pause)
 function pauseExerciseState() {
   isRunning = false;
   clearInterval(timer);
   freezeGif();
 
   if (!isBreak) {
-    // Timer: Gelb / Button: Grün (START)
-    mainTimerBox.className = 'timer-box state-yellow';
-    btnPlay.className = 'btn-main-green';
+    // Zeige das Overlay mit Play-Button
+    overlay.classList.remove('hidden');
+    btnOverlayPlay.classList.remove('hidden');
+    pauseInfo.classList.add('hidden');
+    pauseInfo.style.display = 'none';
+
+    // Button unten: Grün (START / FORTSETZEN)
     btnPlay.textContent = currentSeconds < totalSeconds ? 'FORTSETZEN' : 'START';
+    btnPlay.style.backgroundColor = 'var(--accent-green)';
+    btnPlay.style.color = '#000';
   }
 }
 
-// Zwischenpause Phase (20s)
+// Zustand: Zwischenpause Phase (20s)
 function startBreakPhase(breakDuration) {
   isBreak = true;
   isRunning = false;
   clearInterval(timer);
-
   freezeGif();
   
   totalSeconds = breakDuration;
   currentSeconds = breakDuration;
 
-  // Pause-Timer: Gelb
-  mainTimerBox.className = 'timer-box state-yellow';
-  btnPlay.className = 'btn-main-green';
-  btnPlay.textContent = 'PAUSE ÜBERSPRINGEN';
+  // Zeige das Overlay mit Pausen-Countdown
+  overlay.classList.remove('hidden');
+  btnOverlayPlay.classList.add('hidden');
+  pauseInfo.classList.remove('hidden');
+  pauseInfo.style.display = 'flex';
+
+  // Unterer Button: Überspringen-Funktion
+  btnPlay.textContent = 'ÜBERSPRINGEN';
+  btnPlay.style.backgroundColor = 'var(--card-bg)';
+  btnPlay.style.color = 'var(--text-primary)';
 
   updateTimerDisplay();
 
@@ -229,17 +263,17 @@ function startBreakPhase(breakDuration) {
       clearInterval(timer);
       currentIndex++;
       loadExercise(currentIndex);
-      startExerciseState();
+      startExerciseState(); // Nächste Übung startet automatisch
     }
   }, 1000);
 }
 
-// Event-Handling (inkl. Touch-Fixes für iPhone)
+// Event-Handling
 function handlePlayToggle(e) {
   if (e) e.preventDefault();
   
   if (isBreak) {
-    // Wenn in der Zwischenpause geklickt wird -> Direkt zur nächsten Übung
+    // Wenn in der Pause geklickt wird -> Direkt zur nächsten Übung überspringen
     clearInterval(timer);
     currentIndex++;
     loadExercise(currentIndex);
@@ -251,6 +285,7 @@ function handlePlayToggle(e) {
   }
 }
 
+// Click-Listener für beide Buttons
 btnOverlayPlay.addEventListener('click', handlePlayToggle);
 btnPlay.addEventListener('click', handlePlayToggle);
 
@@ -272,10 +307,10 @@ btnPrev.addEventListener('click', () => {
 
 // GIF-Lade-Event: Sobald das GIF geladen ist, Standbild erstellen (falls noch nicht gestartet)
 elGif.addEventListener('load', () => {
-  if (!isRunning) {
+  if (!isRunning && !isBreak) {
     freezeGif();
   }
 });
 
-// Initiale Ladung
+// Initiale Ladung der App
 loadExercise(currentIndex);
