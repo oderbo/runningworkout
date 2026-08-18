@@ -67,6 +67,74 @@ let totalSeconds = 0;
 let isRunning = false;
 let isBreak = false;
 
+// Audio-Context für Synthesizer-Töne (wird beim ersten User-Klick aktiviert)
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+// Moderner, cleaner Bestätigungston bei Ablauf der Übung
+function playModernConfirmSound() {
+  initAudio();
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(587.33, now); // D5
+  osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.15, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.3);
+}
+
+// Renn-Startsignal für die letzten Sekunden der Pause ("Bieb, Bieb, Bieb, BUUUUB")
+function playRaceStartSound(secondsLeft) {
+  initAudio();
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'triangle';
+
+  if (secondsLeft > 1) {
+    // Die ersten Beeps bei 3 und 2 Sekunden (höher und kurz)
+    osc.frequency.setValueAtTime(440, now);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  } else {
+    // Der letzte tiefere/längere "BUUUUB"-Ton bei 1 Sekunde (Go!)
+    osc.frequency.setValueAtTime(880, now);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
+}
+
 // DOM Elemente
 const overlay = document.getElementById('start-overlay');
 const btnOverlayPlay = document.getElementById('btn-overlay-play');
@@ -221,9 +289,10 @@ function startExerciseState() {
     updateTimerDisplay();
 
     if (currentSeconds <= 0) {
-    clearInterval(timer);
+      clearInterval(timer);
+      playModernConfirmSound(); // Modernen Bestätigungston abspielen
+      
       if (currentIndex < exercises.length - 1) {
-        // Nutze den individuellen pause_after Wert der aktuellen Übung (Fallback: 20 Sek)
         const customBreak = exercises[currentIndex].pause_after !== undefined ? exercises[currentIndex].pause_after : 20;
         startBreakPhase(customBreak);
       } else {
@@ -271,6 +340,11 @@ function startBreakPhase(breakDuration) {
   updateTimerDisplay();
 
   timer = setInterval(() => {
+    // Check für Renn-Start Töne in den letzten 3 Sekunden der Pause
+    if (currentSeconds <= 3 && currentSeconds > 0) {
+      playRaceStartSound(currentSeconds);
+    }
+
     currentSeconds--;
     updateTimerDisplay();
 
