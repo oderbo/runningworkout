@@ -70,10 +70,6 @@ let isBreak = false;
 // DOM Elemente
 const overlay = document.getElementById('start-overlay');
 const btnOverlayPlay = document.getElementById('btn-overlay-play');
-const pauseInfo = document.getElementById('pause-info');
-const pauseCountdown = document.getElementById('pause-countdown');
-const overlayProgressCircle = document.getElementById('overlay-progress-circle');
-
 const timerProgressCircle = document.getElementById('timer-progress-circle');
 const timerDisplay = document.getElementById('timer-display');
 
@@ -134,7 +130,8 @@ function setCircleProgress(percentage, circleElement) {
   circleElement.style.strokeDashoffset = offset;
 }
 
-function loadExercise(index) {
+// Läd nur die UI Daten (Text, Bild), ändert nicht den Timer-Status
+function populateExerciseData(index) {
   const ex = exercises[index];
   elNr.textContent = ex.nr;
   elSide.textContent = ex.seite ? `SEITE: ${formatSideText(ex.seite)}` : '';
@@ -158,13 +155,17 @@ function loadExercise(index) {
   elNextTitle.textContent = nextEx 
     ? `${nextEx.titel} (${formatSideText(nextEx.seite)})` 
     : 'Training beendet!';
+}
 
-  totalSeconds = ex.dauer;
+// Läd die komplette Übung (Wird bei Start oder Klick auf Pfeile genutzt)
+function loadExercise(index) {
+  populateExerciseData(index);
+  totalSeconds = exercises[index].dauer;
   currentSeconds = totalSeconds;
+  isBreak = false;
   
-  // Im angehaltenen Zustand laden
-  pauseExerciseState();
-  updateTimerDisplay(); // Anzeige direkt aktualisieren
+  pauseExerciseState(); // Startet im pausierten Zustand
+  updateTimerDisplay(); 
 }
 
 function updateTimerDisplay() {
@@ -173,13 +174,15 @@ function updateTimerDisplay() {
   const progress = totalSeconds > 0 ? currentSeconds / totalSeconds : 0;
 
   if (isBreak) {
-    // Wenn Pause, aktualisiere den Overlay-Ring
-    pauseCountdown.textContent = `${mins}:${secs}`;
-    setCircleProgress(progress, overlayProgressCircle);
-  } else {
-    // Wenn Übung läuft, aktualisiere den kleinen Timer in der Header-Leiste
-    timerDisplay.textContent = `${mins}:${secs}`;
+    // Kleiner PAUSE Text über dem Timer, Ring wird gelb
+    timerDisplay.innerHTML = `<span style="font-size: 0.4em; color: #eab308; display: block; margin-bottom: -0.5em; letter-spacing: 1px; font-weight: bold;">PAUSE</span><span>${mins}:${secs}</span>`;
     setCircleProgress(progress, timerProgressCircle);
+    timerProgressCircle.style.stroke = '#eab308';
+  } else {
+    // Normaler Timer
+    timerDisplay.innerHTML = `${mins}:${secs}`;
+    setCircleProgress(progress, timerProgressCircle);
+    timerProgressCircle.style.stroke = ''; // Nutzt wieder die Standard CSS Farbe (Grün)
   }
 }
 
@@ -188,12 +191,14 @@ function startExerciseState() {
   isRunning = true;
   isBreak = false;
   
-  overlay.classList.add('hidden');
+  // Falls das overlay am Anfang noch sichtbar ist, blenden wir es nun komplett aus
+  if(overlay) overlay.classList.add('hidden');
+  
   unfreezeGif();
 
   // Button: Gelb (PAUSE)
   btnPlay.textContent = 'PAUSE';
-  btnPlay.style.backgroundColor = '#eab308'; // Gelb
+  btnPlay.style.backgroundColor = '#eab308'; 
   btnPlay.style.color = '#000';
 
   clearInterval(timer);
@@ -218,14 +223,8 @@ function pauseExerciseState() {
   clearInterval(timer);
   freezeGif();
 
+  // Das Overlay wird NICHT mehr aufgerufen. Nur der untere Button ändert sich.
   if (!isBreak) {
-    // Zeige das Overlay mit Play-Button
-    overlay.classList.remove('hidden');
-    btnOverlayPlay.classList.remove('hidden');
-    pauseInfo.classList.add('hidden');
-    pauseInfo.style.display = 'none';
-
-    // Button unten: Grün (START / FORTSETZEN)
     btnPlay.textContent = currentSeconds < totalSeconds ? 'FORTSETZEN' : 'START';
     btnPlay.style.backgroundColor = 'var(--accent-green)';
     btnPlay.style.color = '#000';
@@ -237,19 +236,23 @@ function startBreakPhase(breakDuration) {
   isBreak = true;
   isRunning = false;
   clearInterval(timer);
-  freezeGif();
+  
+  // Gehe im Code direkt zur nächsten Übung
+  currentIndex++;
+  if (currentIndex >= exercises.length) {
+    alert("Workout abgeschlossen!");
+    return;
+  }
+
+  // Lade alle Infos für die NÄCHSTE Übung (Titel, Umfang, GIF im Hintergrund)
+  populateExerciseData(currentIndex);
+  freezeGif(); 
   
   totalSeconds = breakDuration;
   currentSeconds = breakDuration;
 
-  // Zeige das Overlay mit Pausen-Countdown
-  overlay.classList.remove('hidden');
-  btnOverlayPlay.classList.add('hidden');
-  pauseInfo.classList.remove('hidden');
-  pauseInfo.style.display = 'flex';
-
   // Unterer Button: Überspringen-Funktion
-  btnPlay.textContent = 'ÜBERSPRINGEN';
+  btnPlay.textContent = 'PAUSE ÜBERSPRINGEN';
   btnPlay.style.backgroundColor = 'var(--card-bg)';
   btnPlay.style.color = 'var(--text-primary)';
 
@@ -261,9 +264,11 @@ function startBreakPhase(breakDuration) {
 
     if (currentSeconds <= 0) {
       clearInterval(timer);
-      currentIndex++;
-      loadExercise(currentIndex);
-      startExerciseState(); // Nächste Übung startet automatisch
+      
+      // Setup für die Übung, da die Pause um ist
+      totalSeconds = exercises[currentIndex].dauer;
+      currentSeconds = totalSeconds;
+      startExerciseState(); // Übung startet automatisch
     }
   }, 1000);
 }
@@ -273,27 +278,27 @@ function handlePlayToggle(e) {
   if (e) e.preventDefault();
   
   if (isBreak) {
-    // Wenn in der Pause geklickt wird -> Direkt zur nächsten Übung überspringen
+    // Wenn in der Pause geklickt wird -> Direkt die laufende Pausen-Zeit überspringen
     clearInterval(timer);
-    currentIndex++;
-    loadExercise(currentIndex);
+    totalSeconds = exercises[currentIndex].dauer;
+    currentSeconds = totalSeconds;
     startExerciseState();
   } else if (isRunning) {
-    pauseExerciseState();
+    pauseExerciseState(); // Pausiert die laufende Übung
   } else {
-    startExerciseState();
+    startExerciseState(); // Startet/Setzt fort
   }
 }
 
 // Click-Listener für beide Buttons
-btnOverlayPlay.addEventListener('click', handlePlayToggle);
+if(btnOverlayPlay) btnOverlayPlay.addEventListener('click', handlePlayToggle);
 btnPlay.addEventListener('click', handlePlayToggle);
 
 btnNext.addEventListener('click', () => {
   if (currentIndex < exercises.length - 1) {
     clearInterval(timer);
     currentIndex++;
-    loadExercise(currentIndex);
+    loadExercise(currentIndex); // Lädt und bleibt direkt pausiert, kein Start-Overlay!
   }
 });
 
@@ -301,13 +306,14 @@ btnPrev.addEventListener('click', () => {
   if (currentIndex > 0) {
     clearInterval(timer);
     currentIndex--;
-    loadExercise(currentIndex);
+    loadExercise(currentIndex); // Lädt und bleibt direkt pausiert, kein Start-Overlay!
   }
 });
 
-// GIF-Lade-Event: Sobald das GIF geladen ist, Standbild erstellen (falls noch nicht gestartet)
+// GIF-Lade-Event: Sobald ein (neues) GIF geladen ist, Standbild erstellen 
+// (Wichtig für die 20s-Pause, damit das neue GIF direkt nach dem Laden stoppt)
 elGif.addEventListener('load', () => {
-  if (!isRunning && !isBreak) {
+  if (!isRunning) {
     freezeGif();
   }
 });
