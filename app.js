@@ -98,7 +98,8 @@ if (!gifCanvas) {
   elGif.parentNode.insertBefore(gifCanvas, elGif.nextSibling);
 }
 
-const CIRCUMFERENCE = 2 * Math.PI * 52; // 326.72
+// Angepasster Radius (vergrößert für den ca. 30% größeren Ring)
+const CIRCUMFERENCE = 2 * Math.PI * 68; 
 
 // Helper: GIF Standbild erzeugen (Freeze)
 function freezeGif() {
@@ -130,14 +131,26 @@ function setCircleProgress(percentage, circleElement) {
   circleElement.style.strokeDashoffset = offset;
 }
 
+// Formatiert den Umfang wie gewünscht ("20 WH" -> "20x", "30 Sek" bleibt)
+function formatUmfangText(rawUmfang) {
+  if (!rawUmfang) return '';
+  let cleaned = rawUmfang.trim();
+  // Prüfen ob es WH enthält (case-insensitive)
+  if (/wh/i.test(cleaned)) {
+    let numberPart = cleaned.replace(/[^0-9]/g, '');
+    return numberPart ? `${numberPart}x` : cleaned;
+  }
+  return cleaned;
+}
+
 // Läd nur die UI Daten (Text, Bild), ändert nicht den Timer-Status
 function populateExerciseData(index) {
   const ex = exercises[index];
   elNr.textContent = ex.nr;
-  elSide.textContent = ex.seite ? `SEITE: ${formatSideText(ex.seite)}` : '';
+  elSide.textContent = ex.seite ? formatSideText(ex.seite) : '';
   elTitle.textContent = ex.titel;
   elCategory.textContent = `${ex.satz && ex.satz !== 'nan' ? ex.satz + ' • ' : ''}${ex.kategorie}`;
-  elUmfang.textContent = ex.umfang;
+  elUmfang.textContent = formatUmfangText(ex.umfang);
   elHint.textContent = ex.hinweis;
 
   // Spiegeln wenn Seite: R
@@ -157,32 +170,35 @@ function populateExerciseData(index) {
     : 'Training beendet!';
 }
 
-// Läd die komplette Übung (Wird bei Start oder Klick auf Pfeile genutzt)
+// Läd die komplette Übung
 function loadExercise(index) {
   populateExerciseData(index);
   totalSeconds = exercises[index].dauer;
   currentSeconds = totalSeconds;
   isBreak = false;
   
-  pauseExerciseState(); // Startet im pausierten Zustand
+  pauseExerciseState(); 
   updateTimerDisplay(); 
 }
 
 function updateTimerDisplay() {
-  const mins = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
-  const secs = (currentSeconds % 60).toString().padStart(2, '0');
   const progress = totalSeconds > 0 ? currentSeconds / totalSeconds : 0;
 
   if (isBreak) {
-    // Kleiner PAUSE Text über dem Timer, Ring wird gelb
-    timerDisplay.innerHTML = `<span style="font-size: 0.4em; color: #eab308; display: block; margin-bottom: -0.5em; letter-spacing: 1px; font-weight: bold;">PAUSE</span><span>${mins}:${secs}</span>`;
+    // Wort PAUSE absolut mittig, darunter nur die reinen Sekunden (Weiß)
+    timerDisplay.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+        <span style="font-size: 0.32em; color: #ffffff; letter-spacing: 2px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase;">PAUSE</span>
+        <span style="font-size: 1em; color: #ffffff; line-height: 1;">${currentSeconds}</span>
+      </div>
+    `;
     setCircleProgress(progress, timerProgressCircle);
-    timerProgressCircle.style.stroke = '#eab308';
+    timerProgressCircle.style.stroke = '#eab308'; // Gelber Ring in der Pause
   } else {
-    // Normaler Timer
-    timerDisplay.innerHTML = `${mins}:${secs}`;
+    // Normaler Timer - Nur Sekunden, Textfarbe Weiß
+    timerDisplay.innerHTML = `<span style="color: #ffffff;">${currentSeconds}</span>`;
     setCircleProgress(progress, timerProgressCircle);
-    timerProgressCircle.style.stroke = ''; // Nutzt wieder die Standard CSS Farbe (Grün)
+    timerProgressCircle.style.stroke = ''; // Standard CSS Farbe
   }
 }
 
@@ -191,12 +207,9 @@ function startExerciseState() {
   isRunning = true;
   isBreak = false;
   
-  // Falls das overlay am Anfang noch sichtbar ist, blenden wir es nun komplett aus
   if(overlay) overlay.classList.add('hidden');
-  
   unfreezeGif();
 
-  // Button: Gelb (PAUSE)
   btnPlay.textContent = 'PAUSE';
   btnPlay.style.backgroundColor = '#eab308'; 
   btnPlay.style.color = '#000';
@@ -209,7 +222,7 @@ function startExerciseState() {
     if (currentSeconds <= 0) {
       clearInterval(timer);
       if (currentIndex < exercises.length - 1) {
-        startBreakPhase(20); // 20 Sek Pause zwischen Übungen
+        startBreakPhase(20); // 20 Sek Pause
       } else {
         alert("Workout abgeschlossen!");
       }
@@ -217,13 +230,12 @@ function startExerciseState() {
   }, 1000);
 }
 
-// Zustand: Übung PAUSIERT (Manuelle Pause)
+// Zustand: Übung PAUSIERT
 function pauseExerciseState() {
   isRunning = false;
   clearInterval(timer);
   freezeGif();
 
-  // Das Overlay wird NICHT mehr aufgerufen. Nur der untere Button ändert sich.
   if (!isBreak) {
     btnPlay.textContent = currentSeconds < totalSeconds ? 'FORTSETZEN' : 'START';
     btnPlay.style.backgroundColor = 'var(--accent-green)';
@@ -237,21 +249,18 @@ function startBreakPhase(breakDuration) {
   isRunning = false;
   clearInterval(timer);
   
-  // Gehe im Code direkt zur nächsten Übung
   currentIndex++;
   if (currentIndex >= exercises.length) {
     alert("Workout abgeschlossen!");
     return;
   }
 
-  // Lade alle Infos für die NÄCHSTE Übung (Titel, Umfang, GIF im Hintergrund)
   populateExerciseData(currentIndex);
   freezeGif(); 
   
   totalSeconds = breakDuration;
   currentSeconds = breakDuration;
 
-  // Unterer Button: Überspringen-Funktion
   btnPlay.textContent = 'PAUSE ÜBERSPRINGEN';
   btnPlay.style.backgroundColor = 'var(--card-bg)';
   btnPlay.style.color = 'var(--text-primary)';
@@ -264,11 +273,9 @@ function startBreakPhase(breakDuration) {
 
     if (currentSeconds <= 0) {
       clearInterval(timer);
-      
-      // Setup für die Übung, da die Pause um ist
       totalSeconds = exercises[currentIndex].dauer;
       currentSeconds = totalSeconds;
-      startExerciseState(); // Übung startet automatisch
+      startExerciseState(); 
     }
   }, 1000);
 }
@@ -278,19 +285,17 @@ function handlePlayToggle(e) {
   if (e) e.preventDefault();
   
   if (isBreak) {
-    // Wenn in der Pause geklickt wird -> Direkt die laufende Pausen-Zeit überspringen
     clearInterval(timer);
     totalSeconds = exercises[currentIndex].dauer;
     currentSeconds = totalSeconds;
     startExerciseState();
   } else if (isRunning) {
-    pauseExerciseState(); // Pausiert die laufende Übung
+    pauseExerciseState(); 
   } else {
-    startExerciseState(); // Startet/Setzt fort
+    startExerciseState(); 
   }
 }
 
-// Click-Listener für beide Buttons
 if(btnOverlayPlay) btnOverlayPlay.addEventListener('click', handlePlayToggle);
 btnPlay.addEventListener('click', handlePlayToggle);
 
@@ -298,7 +303,7 @@ btnNext.addEventListener('click', () => {
   if (currentIndex < exercises.length - 1) {
     clearInterval(timer);
     currentIndex++;
-    loadExercise(currentIndex); // Lädt und bleibt direkt pausiert, kein Start-Overlay!
+    loadExercise(currentIndex); 
   }
 });
 
@@ -306,17 +311,14 @@ btnPrev.addEventListener('click', () => {
   if (currentIndex > 0) {
     clearInterval(timer);
     currentIndex--;
-    loadExercise(currentIndex); // Lädt und bleibt direkt pausiert, kein Start-Overlay!
+    loadExercise(currentIndex); 
   }
 });
 
-// GIF-Lade-Event: Sobald ein (neues) GIF geladen ist, Standbild erstellen 
-// (Wichtig für die 20s-Pause, damit das neue GIF direkt nach dem Laden stoppt)
 elGif.addEventListener('load', () => {
   if (!isRunning) {
     freezeGif();
   }
 });
 
-// Initiale Ladung der App
 loadExercise(currentIndex);
