@@ -98,10 +98,10 @@ if (!gifCanvas) {
   elGif.parentNode.insertBefore(gifCanvas, elGif.nextSibling);
 }
 
-// Exakter mathematischer Umfang für Radius r = 68 (2 * pi * 68 ≈ 427.26)
-const CIRCUMFERENCE = 2 * Math.PI * 68; 
+// Exakter mathematischer Umfang für Radius r = 52 aus dem HTML (2 * pi * 52 ≈ 326.72)
+const CIRCUMFERENCE = 2 * Math.PI * 52; 
 
-// SVG-Kreis initialisieren, damit er zu Beginn absolut voll ist
+// SVG-Kreis initialisieren
 if (timerProgressCircle) {
   timerProgressCircle.style.strokeDasharray = CIRCUMFERENCE;
   timerProgressCircle.style.strokeDashoffset = 0;
@@ -109,10 +109,21 @@ if (timerProgressCircle) {
 
 function setCircleProgress(remainingSeconds, maxSeconds, circleElement) {
   if (!circleElement) return;
-  // Exakte proportionale Berechnung: Bei vollen Sekunden ist offset = 0 (voll), bei 0 Sekunden = CIRCUMFERENCE (leer)
   const progress = maxSeconds > 0 ? (remainingSeconds / maxSeconds) : 0;
   const offset = CIRCUMFERENCE * (1 - progress);
   circleElement.style.strokeDashoffset = Math.max(0, Math.min(CIRCUMFERENCE, offset));
+}
+
+// Helper: GIF Standbild erzeugen (Freeze)
+function freezeGif() {
+  if (elGif.complete && elGif.naturalWidth > 0) {
+    gifCanvas.width = elGif.naturalWidth || elGif.clientWidth;
+    gifCanvas.height = elGif.naturalHeight || elGif.clientHeight;
+    const ctx = gifCanvas.getContext('2d');
+    ctx.drawImage(elGif, 0, 0, gifCanvas.width, gifCanvas.height);
+    gifCanvas.style.display = 'block';
+    elGif.style.display = 'none';
+  }
 }
 
 // Helper: GIF Animation fortsetzen (Unfreeze)
@@ -125,14 +136,6 @@ function formatSideText(seite) {
   if (seite === 'L') return 'LINKS';
   if (seite === 'R') return 'RECHTS';
   return seite ? seite.toUpperCase() : '';
-}
-
-function setCircleProgress(remainingSeconds, maxSeconds, circleElement) {
-  if (!circleElement) return;
-  // Korrekte mathematische Richtung: Von 0 (voll) bis CIRCUMFERENCE (leer)
-  const progress = maxSeconds > 0 ? (remainingSeconds / maxSeconds) : 0;
-  const offset = CIRCUMFERENCE * (1 - progress);
-  circleElement.style.strokeDashoffset = offset;
 }
 
 // Formatiert den Umfang ("20 WH" -> "20x")
@@ -194,6 +197,7 @@ function updateTimerDisplay() {
     setCircleProgress(currentSeconds, totalSeconds, timerProgressCircle);
     timerProgressCircle.style.stroke = '#eab308'; // Gelb in der Pause
   } else {
+    // Reines Anzeigen der Zahl ohne führende Nullen wie "00:30"
     timerDisplay.innerHTML = `<span style="color: #ffffff;">${currentSeconds}</span>`;
     setCircleProgress(currentSeconds, totalSeconds, timerProgressCircle);
     timerProgressCircle.style.stroke = ''; // Standard-Farbe
@@ -271,6 +275,7 @@ function startBreakPhase(breakDuration) {
 
     if (currentSeconds <= 0) {
       clearInterval(timer);
+      // HIER LAG DER FEHLER: Nach Ablauf der Pause direkt automatisch in die nächste Übung starten
       totalSeconds = exercises[currentIndex].dauer;
       currentSeconds = totalSeconds;
       startExerciseState(); 
