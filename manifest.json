@@ -1,0 +1,10 @@
+{
+  "short_name": "RunningWorkout",
+  "name": "Running Workout App",
+  "icons": [],
+  "start_url": "/runningworkout/",
+  "scope": "/runningworkout/",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "display": "standalone"
+}
