@@ -98,8 +98,14 @@ if (!gifCanvas) {
   elGif.parentNode.insertBefore(gifCanvas, elGif.nextSibling);
 }
 
-// Angepasster Radius (vergrößert für den ca. 30% größeren Ring)
+// Exakter mathematischer Umfang für Radius r = 68 (2 * pi * 68 ≈ 427.26)
 const CIRCUMFERENCE = 2 * Math.PI * 68; 
+
+// SVG-Kreis initialisieren, damit er zu Beginn voll ist
+if (timerProgressCircle) {
+  timerProgressCircle.style.strokeDasharray = CIRCUMFERENCE;
+  timerProgressCircle.style.strokeDashoffset = 0;
+}
 
 // Helper: GIF Standbild erzeugen (Freeze)
 function freezeGif() {
@@ -125,17 +131,18 @@ function formatSideText(seite) {
   return seite ? seite.toUpperCase() : '';
 }
 
-function setCircleProgress(percentage, circleElement) {
+function setCircleProgress(remainingSeconds, maxSeconds, circleElement) {
   if (!circleElement) return;
-  const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
+  // Korrekte mathematische Richtung: Von 0 (voll) bis CIRCUMFERENCE (leer)
+  const progress = maxSeconds > 0 ? (remainingSeconds / maxSeconds) : 0;
+  const offset = CIRCUMFERENCE * (1 - progress);
   circleElement.style.strokeDashoffset = offset;
 }
 
-// Formatiert den Umfang wie gewünscht ("20 WH" -> "20x", "30 Sek" bleibt)
+// Formatiert den Umfang ("20 WH" -> "20x")
 function formatUmfangText(rawUmfang) {
   if (!rawUmfang) return '';
   let cleaned = rawUmfang.trim();
-  // Prüfen ob es WH enthält (case-insensitive)
   if (/wh/i.test(cleaned)) {
     let numberPart = cleaned.replace(/[^0-9]/g, '');
     return numberPart ? `${numberPart}x` : cleaned;
@@ -143,7 +150,7 @@ function formatUmfangText(rawUmfang) {
   return cleaned;
 }
 
-// Läd nur die UI Daten (Text, Bild), ändert nicht den Timer-Status
+// Läd nur die UI Daten (Text, Bild)
 function populateExerciseData(index) {
   const ex = exercises[index];
   elNr.textContent = ex.nr;
@@ -153,7 +160,6 @@ function populateExerciseData(index) {
   elUmfang.textContent = formatUmfangText(ex.umfang);
   elHint.textContent = ex.hinweis;
 
-  // Spiegeln wenn Seite: R
   if (ex.seite === 'R') {
     elGif.style.transform = 'scaleX(-1)';
     gifCanvas.style.transform = 'scaleX(-1)';
@@ -182,23 +188,19 @@ function loadExercise(index) {
 }
 
 function updateTimerDisplay() {
-  const progress = totalSeconds > 0 ? currentSeconds / totalSeconds : 0;
-
   if (isBreak) {
-    // Wort PAUSE absolut mittig, darunter nur die reinen Sekunden (Weiß)
     timerDisplay.innerHTML = `
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
         <span style="font-size: 0.32em; color: #ffffff; letter-spacing: 2px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase;">PAUSE</span>
         <span style="font-size: 1em; color: #ffffff; line-height: 1;">${currentSeconds}</span>
       </div>
     `;
-    setCircleProgress(progress, timerProgressCircle);
-    timerProgressCircle.style.stroke = '#eab308'; // Gelber Ring in der Pause
+    setCircleProgress(currentSeconds, totalSeconds, timerProgressCircle);
+    timerProgressCircle.style.stroke = '#eab308'; // Gelb in der Pause
   } else {
-    // Normaler Timer - Nur Sekunden, Textfarbe Weiß
     timerDisplay.innerHTML = `<span style="color: #ffffff;">${currentSeconds}</span>`;
-    setCircleProgress(progress, timerProgressCircle);
-    timerProgressCircle.style.stroke = ''; // Standard CSS Farbe
+    setCircleProgress(currentSeconds, totalSeconds, timerProgressCircle);
+    timerProgressCircle.style.stroke = ''; // Standard-Farbe
   }
 }
 
