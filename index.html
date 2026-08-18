@@ -13,7 +13,7 @@
 <body>
   <div class="app-container">
     
-    <!-- Start Overlay (Punkt 1) -->
+    <!-- Start & Pause Overlay (Punkt 1) -->
     <div id="start-overlay" class="start-overlay">
       <div class="ring-container play-ring" id="overlay-ring-container">
         <svg class="progress-ring" viewBox="0 0 120 120">
@@ -21,7 +21,16 @@
           <circle class="progress-ring__circle" id="overlay-progress-circle" cx="60" cy="60" r="52"></circle>
         </svg>
         <div class="ring-content" id="overlay-ring-content">
+          
+          <!-- Play-Status -->
           <button id="btn-overlay-play" class="play-btn">▶</button>
+          
+          <!-- Pause-Status (Ergänzt für nahtlosen JS-Wechsel) -->
+          <div id="pause-info" class="hidden" style="display: none; flex-direction: column; align-items: center;">
+            <div class="pause-label">Pause</div>
+            <div class="pause-countdown-text" id="pause-countdown">00:15</div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -49,6 +58,7 @@
       <h1 class="exercise-title" id="exercise-title">Seitliches Beinheben im Liegen</h1>
       <p class="exercise-category" id="exercise-category">Hüftabduktion / Gluteus Medius</p>
 
+      <!-- Content Area & GIF Layout (Punkt 2 & 4) -->
       <div class="media-card">
         <img id="exercise-gif" src="assets/gifs/1.gif" alt="Übungsausführung" onerror="this.src='https://via.placeholder.com/400x400?text=GIF+Platzhalter'">
       </div>

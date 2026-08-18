@@ -194,6 +194,11 @@ html, body {
   pointer-events: none;
 }
 
+/* Hilfsklasse für Elemente, die per JS ausgeblendet werden */
+.hidden {
+  display: none !important;
+}
+
 .play-btn {
   background: transparent;
   border: none;

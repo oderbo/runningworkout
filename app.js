@@ -55,7 +55,7 @@ const exercises = [
   {"nr": "LIV", "satz": "1. Satz", "seite": "L", "titel": "Adduktorendehnung im Seitstütz", "kategorie": "Beininnenseite / Adduktoren", "umfang": "30 Sek", "hinweis": "Statische Dehnung im Seitstütz halten", "dauer": 30, "id": 15},
   {"nr": "LV", "satz": "1. Satz", "seite": "R", "titel": "Adduktorendehnung im Seitstütz", "kategorie": "Beininnenseite / Adduktoren", "umfang": "30 Sek", "hinweis": "Statische Dehnung im Seitstütz halten", "dauer": 30, "id": 15},
   {"nr": "LVI", "satz": "2. Satz", "seite": "L", "titel": "Adduktorendehnung in Rückenlage", "kategorie": "Hüftöffnung & Mobilisation", "umfang": "10 WH", "hinweis": "Kontrolliertes Abspreizen im Liegen", "dauer": 30, "id": 13},
-  {"nr": "LVIII", "satz": "2. Satz", "seite": "R", "titel": "Adduktorendehnung in Rückenlage", "kategorie": "Hüftöffnung & Mobilisation", "umfang": "10 WH", "hinweis": "Kontrolliertes Abspreizen im Liegen", "dauer": 30, "id": 13},
+  {"nr": "LVII", "satz": "2. Satz", "seite": "R", "titel": "Adduktorendehnung in Rückenlage", "kategorie": "Hüftöffnung & Mobilisation", "umfang": "10 WH", "hinweis": "Kontrolliertes Abspreizen im Liegen", "dauer": 30, "id": 13},
   {"nr": "LVIII", "satz": "2. Satz", "seite": "L", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "id": 14},
   {"nr": "LIX", "satz": "2. Satz", "seite": "R", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "id": 14}
 ];
@@ -64,13 +64,13 @@ let currentIndex = 0;
 let timer = null;
 let currentSeconds = 0;
 let totalSeconds = 0;
+let isRunning = false;
+let isBreak = false;
 
 // DOM Elemente
 const overlay = document.getElementById('start-overlay');
 const btnOverlayPlay = document.getElementById('btn-overlay-play');
-const overlayRingContent = document.getElementById('overlay-ring-content');
-const overlayProgressCircle = document.getElementById('overlay-progress-circle');
-
+const mainTimerBox = document.getElementById('main-timer-box');
 const timerProgressCircle = document.getElementById('timer-progress-circle');
 const timerDisplay = document.getElementById('timer-display');
 
@@ -80,6 +80,7 @@ const elTitle = document.getElementById('exercise-title');
 const elCategory = document.getElementById('exercise-category');
 const elUmfang = document.getElementById('exercise-umfang');
 const elGif = document.getElementById('exercise-gif');
+const gifCanvas = document.getElementById('gif-canvas');
 const elHint = document.getElementById('exercise-hint');
 const elNextTitle = document.getElementById('next-title');
 
@@ -87,19 +88,35 @@ const btnPlay = document.getElementById('btn-play');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 
-// Ring-Umfang für Radius 52
-const CIRCUMFERENCE = 2 * Math.PI * 52;
+const CIRCUMFERENCE = 2 * Math.PI * 52; // 326.72
 
-function setCircleProgress(circle, percentage) {
-  const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
-  circle.style.strokeDashoffset = offset;
+// Helper: GIF Standbild erzeugen (Freeze)
+function freezeGif() {
+  if (elGif.complete && elGif.naturalWidth > 0) {
+    gifCanvas.width = elGif.naturalWidth || elGif.clientWidth;
+    gifCanvas.height = elGif.naturalHeight || elGif.clientHeight;
+    const ctx = gifCanvas.getContext('2d');
+    ctx.drawImage(elGif, 0, 0, gifCanvas.width, gifCanvas.height);
+    gifCanvas.style.display = 'block';
+    elGif.style.display = 'none';
+  }
 }
 
-// Wandelt Seitenkürzel 'L'/'R' in 'LINKS'/'RECHTS' um
+// Helper: GIF Animation fortsetzen (Unfreeze)
+function unfreezeGif() {
+  gifCanvas.style.display = 'none';
+  elGif.style.display = 'block';
+}
+
 function formatSideText(seite) {
   if (seite === 'L') return 'LINKS';
   if (seite === 'R') return 'RECHTS';
-  return seite.toUpperCase();
+  return seite ? seite.toUpperCase() : '';
+}
+
+function setCircleProgress(percentage) {
+  const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
+  timerProgressCircle.style.strokeDashoffset = offset;
 }
 
 function loadExercise(index) {
@@ -109,8 +126,18 @@ function loadExercise(index) {
   elTitle.textContent = ex.titel;
   elCategory.textContent = `${ex.satz && ex.satz !== 'nan' ? ex.satz + ' • ' : ''}${ex.kategorie}`;
   elUmfang.textContent = ex.umfang;
-  elGif.src = `assets/gifs/${ex.id}.gif`;
   elHint.textContent = ex.hinweis;
+
+  // Spiegeln wenn Seite: R
+  if (ex.seite === 'R') {
+    elGif.classList.add('flipped');
+    gifCanvas.classList.add('flipped');
+  } else {
+    elGif.classList.remove('flipped');
+    gifCanvas.classList.remove('flipped');
+  }
+
+  elGif.src = `assets/gifs/${ex.id}.gif`;
 
   const nextEx = exercises[index + 1];
   elNextTitle.textContent = nextEx 
@@ -119,92 +146,119 @@ function loadExercise(index) {
 
   totalSeconds = ex.dauer;
   currentSeconds = totalSeconds;
-  updateTimerUI();
+  
+  // Im angehaltenen Zustand laden
+  pauseExerciseState();
 }
 
-function updateTimerUI() {
+function updateTimerDisplay() {
   const mins = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
   const secs = (currentSeconds % 60).toString().padStart(2, '0');
   timerDisplay.textContent = `${mins}:${secs}`;
   
   const progress = totalSeconds > 0 ? currentSeconds / totalSeconds : 0;
-  setCircleProgress(timerProgressCircle, progress);
+  setCircleProgress(progress);
 }
 
-function startWorkoutSequence() {
-  overlay.classList.add('hidden');
-  runExerciseTimer();
-}
-
-function runExerciseTimer() {
-  clearInterval(timer);
-  setCircleProgress(timerProgressCircle, 1);
+// Zustand: Übung LÄUFT
+function startExerciseState() {
+  isRunning = true;
+  isBreak = false;
   
+  overlay.classList.add('hidden');
+  unfreezeGif();
+
+  // Timer: Grün / Button: Gelb (PAUSE)
+  mainTimerBox.className = 'timer-box state-green';
+  btnPlay.className = 'btn-main-yellow';
+  btnPlay.textContent = 'PAUSE';
+
+  clearInterval(timer);
   timer = setInterval(() => {
     currentSeconds--;
-    updateTimerUI();
+    updateTimerDisplay();
 
     if (currentSeconds <= 0) {
       clearInterval(timer);
       if (currentIndex < exercises.length - 1) {
-        startPausePhase(20); // 20 Sekunden Pause zwischen Übungen
+        startBreakPhase(20); // 20 Sek Pause zwischen Übungen
       } else {
-        alert("Workout beendet!");
+        alert("Workout abgeschlossen!");
       }
     }
   }, 1000);
 }
 
-function startPausePhase(pauseDuration) {
-  let remainingPause = pauseDuration;
+// Zustand: Übung PAUSIERT
+function pauseExerciseState() {
+  isRunning = false;
+  clearInterval(timer);
+  freezeGif();
+
+  if (!isBreak) {
+    // Timer: Gelb / Button: Grün (START)
+    mainTimerBox.className = 'timer-box state-yellow';
+    btnPlay.className = 'btn-main-green';
+    btnPlay.textContent = currentSeconds < totalSeconds ? 'FORTSETZEN' : 'START';
+  }
+}
+
+// Zwischenpause Phase (20s)
+function startBreakPhase(breakDuration) {
+  isBreak = true;
+  isRunning = false;
+  clearInterval(timer);
+
+  freezeGif();
   
-  // Overlay als Pause-Bildschirm konfigurieren
-  overlayRingContent.innerHTML = `
-    <div style="text-align:center;">
-      <div class="pause-label">PAUSE</div>
-      <div class="pause-countdown-text">${remainingPause}</div>
-    </div>
-  `;
-  setCircleProgress(overlayProgressCircle, 1);
-  overlay.classList.remove('hidden');
+  totalSeconds = breakDuration;
+  currentSeconds = breakDuration;
+
+  // Pause-Timer: Gelb
+  mainTimerBox.className = 'timer-box state-yellow';
+  btnPlay.className = 'btn-main-green';
+  btnPlay.textContent = 'PAUSE ÜBERSPRINGEN';
+
+  updateTimerDisplay();
 
   timer = setInterval(() => {
-    remainingPause--;
-    const countEl = overlayRingContent.querySelector('.pause-countdown-text');
-    if (countEl) countEl.textContent = remainingPause;
-    
-    setCircleProgress(overlayProgressCircle, remainingPause / pauseDuration);
+    currentSeconds--;
+    updateTimerDisplay();
 
-    if (remainingPause <= 0) {
+    if (currentSeconds <= 0) {
       clearInterval(timer);
       currentIndex++;
       loadExercise(currentIndex);
-      overlay.classList.add('hidden');
-      
-      // Overlay zurück auf Play-Button setzen für spätere Resets
-      overlayRingContent.innerHTML = '';
-      overlayRingContent.appendChild(btnOverlayPlay);
-      
-      runExerciseTimer();
+      startExerciseState();
     }
   }, 1000);
 }
 
-// Event-Listener
-btnOverlayPlay.addEventListener('click', startWorkoutSequence);
-
-btnPlay.addEventListener('click', () => {
-  if (overlay.classList.contains('hidden')) {
-    startWorkoutSequence();
+// Event-Handling (inkl. Touch-Fixes für iPhone)
+function handlePlayToggle(e) {
+  if (e) e.preventDefault();
+  
+  if (isBreak) {
+    // Wenn in der Zwischenpause geklickt wird -> Direkt zur nächsten Übung
+    clearInterval(timer);
+    currentIndex++;
+    loadExercise(currentIndex);
+    startExerciseState();
+  } else if (isRunning) {
+    pauseExerciseState();
+  } else {
+    startExerciseState();
   }
-});
+}
+
+btnOverlayPlay.addEventListener('click', handlePlayToggle);
+btnPlay.addEventListener('click', handlePlayToggle);
 
 btnNext.addEventListener('click', () => {
   if (currentIndex < exercises.length - 1) {
     clearInterval(timer);
     currentIndex++;
     loadExercise(currentIndex);
-    if (overlay.classList.contains('hidden')) runExerciseTimer();
   }
 });
 
@@ -213,9 +267,15 @@ btnPrev.addEventListener('click', () => {
     clearInterval(timer);
     currentIndex--;
     loadExercise(currentIndex);
-    if (overlay.classList.contains('hidden')) runExerciseTimer();
   }
 });
 
-// Start-Zustand laden
+// GIF-Lade-Event: Sobald das GIF geladen ist, Standbild erstellen (falls noch nicht gestartet)
+elGif.addEventListener('load', () => {
+  if (!isRunning) {
+    freezeGif();
+  }
+});
+
+// Initiale Ladung
 loadExercise(currentIndex);
