@@ -3,6 +3,7 @@
   --card-bg: #16222f;
   --accent-green: #00ff66;
   --accent-green-glow: rgba(0, 255, 102, 0.4);
+  --accent-blue: #38bdf8;
   --text-primary: #ffffff;
   --text-secondary: #8a99ad;
 }
@@ -13,7 +14,6 @@
   padding: 0;
 }
 
-/* Safe Area Integration für iOS Notch/Kamera-Ausschnitt (Punkt 3) */
 html, body {
   width: 100%;
   height: 100%;
@@ -35,34 +35,66 @@ html, body {
   position: relative;
 }
 
-/* Header & Elemente oben (Punkt 5) */
+/* Header & Exakte 3-Spalten-Ausrichtung */
 .top-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 10px 5px 10px;
-  position: relative;
+  padding: 10px 8px 5px 8px;
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.header-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .roman-num {
-  font-size: 1.8rem; /* 50% größer */
-  font-weight: bold;
-  color: #38bdf8;
-  width: 60px;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent-blue);
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
-.reps-badge {
-  font-size: 1.5rem; /* 50% größer */
+.side-indicator {
+  color: var(--accent-blue);
+  font-size: 0.75rem;
   font-weight: bold;
-  background: var(--card-bg);
-  padding: 6px 14px;
-  border-radius: 20px;
-  color: #a5f3fc;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.side-indicator span {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.reps-display {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
   text-align: right;
-  min-width: 80px;
+  line-height: 1;
 }
 
-/* SVG Kreis-Ringe */
+/* SVG Timer Ring (Größer durch mehr Platz) */
 .ring-container {
   position: relative;
   display: flex;
@@ -71,8 +103,8 @@ html, body {
 }
 
 .timer-ring {
-  width: 110px;
-  height: 110px;
+  width: 135px;
+  height: 135px;
 }
 
 .play-ring {
@@ -113,13 +145,13 @@ html, body {
 }
 
 .timer-display {
-  font-size: 2.2rem; /* Doppelt so groß */
-  font-weight: bold;
+  font-size: 2.6rem;
+  font-weight: 800;
   color: var(--accent-green);
   text-shadow: 0 0 10px var(--accent-green-glow);
 }
 
-/* Content Area & GIF Layout (Punkt 2 & 4) */
+/* Content Area */
 .content-body {
   flex: 1;
   display: flex;
@@ -131,16 +163,8 @@ html, body {
   overflow: hidden;
 }
 
-.side-indicator {
-  color: #38bdf8;
-  font-weight: bold;
-  letter-spacing: 1px;
-  font-size: 0.95rem;
-  margin-bottom: 2px;
-}
-
 .exercise-title {
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 2px;
 }
@@ -148,13 +172,13 @@ html, body {
 .exercise-category {
   color: var(--text-secondary);
   font-size: 0.85rem;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .media-card {
   width: 100%;
   max-width: 340px;
-  aspect-ratio: 1 / 1; /* Quadratisch fixieren */
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,10 +196,10 @@ html, body {
 .exercise-hint {
   color: var(--text-secondary);
   font-size: 0.85rem;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
-/* Overlay für Play & Pause-Zeiten (Punkt 1) */
+/* Start Overlay */
 .start-overlay {
   position: absolute;
   inset: 0;
@@ -194,7 +218,6 @@ html, body {
   pointer-events: none;
 }
 
-/* Hilfsklasse für Elemente, die per JS ausgeblendet werden */
 .hidden {
   display: none !important;
 }
@@ -207,7 +230,7 @@ html, body {
   cursor: pointer;
   opacity: 0.85;
   filter: drop-shadow(0 0 12px var(--accent-green-glow));
-  margin-left: 8px; /* Optische Korrektur Play-Icon */
+  margin-left: 8px;
   transition: transform 0.2s, opacity 0.2s;
 }
 
@@ -229,7 +252,7 @@ html, body {
   margin-bottom: 8px;
 }
 
-/* Controls */
+/* Bottom Controls */
 .bottom-bar {
   padding-top: 8px;
 }
@@ -261,7 +284,7 @@ html, body {
 
 .btn-primary {
   flex: 2;
-  background: var(--accent-green);
+  background: #eab308;
   color: #000;
 }
 

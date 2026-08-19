@@ -67,7 +67,6 @@ let totalSeconds = 0;
 let isRunning = false;
 let isBreak = false;
 
-// Audio-Context für Synthesizer-Töne (wird beim ersten User-Klick aktiviert)
 let audioCtx = null;
 
 function initAudio() {
@@ -79,7 +78,6 @@ function initAudio() {
   }
 }
 
-// Moderner, cleaner Bestätigungston bei Ablauf der Übung
 function playModernConfirmSound() {
   initAudio();
   if (!audioCtx) return;
@@ -89,8 +87,8 @@ function playModernConfirmSound() {
   const gain = audioCtx.createGain();
 
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(587.33, now); // D5
-  osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+  osc.frequency.setValueAtTime(587.33, now);
+  osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
 
   gain.gain.setValueAtTime(0, now);
   gain.gain.linearRampToValueAtTime(0.15, now + 0.02);
@@ -103,7 +101,6 @@ function playModernConfirmSound() {
   osc.stop(now + 0.3);
 }
 
-// Renn-Startsignal für die letzten Sekunden der Pause ("Bieb, Bieb, Bieb, BUUUUB")
 function playRaceStartSound(secondsLeft) {
   initAudio();
   if (!audioCtx) return;
@@ -115,7 +112,6 @@ function playRaceStartSound(secondsLeft) {
   osc.type = 'triangle';
 
   if (secondsLeft > 1) {
-    // Die ersten Beeps bei 3 und 2 Sekunden (höher und kurz)
     osc.frequency.setValueAtTime(440, now);
     gain.gain.setValueAtTime(0.1, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
@@ -124,7 +120,6 @@ function playRaceStartSound(secondsLeft) {
     osc.start(now);
     osc.stop(now + 0.1);
   } else {
-    // Der letzte tiefere/längere "BUUUUB"-Ton bei 1 Sekunde (Go!)
     osc.frequency.setValueAtTime(880, now);
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
@@ -154,7 +149,6 @@ const btnPlay = document.getElementById('btn-play');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 
-// Canvas dynamisch erzeugen, falls im HTML nicht vorhanden
 let gifCanvas = document.getElementById('gif-canvas');
 if (!gifCanvas) {
   gifCanvas = document.createElement('canvas');
@@ -166,10 +160,8 @@ if (!gifCanvas) {
   elGif.parentNode.insertBefore(gifCanvas, elGif.nextSibling);
 }
 
-// Exakter mathematischer Umfang für Radius r = 52 aus dem HTML (2 * pi * 52 ≈ 326.72)
 const CIRCUMFERENCE = 2 * Math.PI * 52; 
 
-// SVG-Kreis initialisieren
 if (timerProgressCircle) {
   timerProgressCircle.style.strokeDasharray = CIRCUMFERENCE;
   timerProgressCircle.style.strokeDashoffset = 0;
@@ -182,7 +174,6 @@ function setCircleProgress(remainingSeconds, maxSeconds, circleElement) {
   circleElement.style.strokeDashoffset = Math.max(0, Math.min(CIRCUMFERENCE, offset));
 }
 
-// Helper: GIF Standbild erzeugen (Freeze)
 function freezeGif() {
   if (elGif.complete && elGif.naturalWidth > 0) {
     gifCanvas.width = elGif.naturalWidth || elGif.clientWidth;
@@ -194,7 +185,6 @@ function freezeGif() {
   }
 }
 
-// Helper: GIF Animation fortsetzen (Unfreeze)
 function unfreezeGif() {
   gifCanvas.style.display = 'none';
   elGif.style.display = 'block';
@@ -206,7 +196,6 @@ function formatSideText(seite) {
   return seite ? seite.toUpperCase() : '';
 }
 
-// Formatiert den Umfang ("20 WH" -> "20x")
 function formatUmfangText(rawUmfang) {
   if (!rawUmfang) return '';
   let cleaned = rawUmfang.trim();
@@ -217,11 +206,15 @@ function formatUmfangText(rawUmfang) {
   return cleaned;
 }
 
-// Läd nur die UI Daten (Text, Bild)
 function populateExerciseData(index) {
   const ex = exercises[index];
   elNr.textContent = ex.nr;
-  elSide.textContent = ex.seite ? formatSideText(ex.seite) : '';
+  
+  const sideVal = ex.seite ? formatSideText(ex.seite) : '';
+  if (elSide) {
+    elSide.innerHTML = `Seite:<br><span>${sideVal}</span>`;
+  }
+
   elTitle.textContent = ex.titel;
   elCategory.textContent = `${ex.satz && ex.satz !== 'nan' ? ex.satz + ' • ' : ''}${ex.kategorie}`;
   elUmfang.textContent = formatUmfangText(ex.umfang);
@@ -243,7 +236,6 @@ function populateExerciseData(index) {
     : 'Training beendet!';
 }
 
-// Läd die komplette Übung
 function loadExercise(index) {
   populateExerciseData(index);
   totalSeconds = exercises[index].dauer;
@@ -263,15 +255,14 @@ function updateTimerDisplay() {
       </div>
     `;
     setCircleProgress(currentSeconds, totalSeconds, timerProgressCircle);
-    timerProgressCircle.style.stroke = '#eab308'; // Gelb in der Pause
+    timerProgressCircle.style.stroke = '#eab308';
   } else {
     timerDisplay.innerHTML = `<span style="color: #ffffff;">${currentSeconds}</span>`;
     setCircleProgress(currentSeconds, totalSeconds, timerProgressCircle);
-    timerProgressCircle.style.stroke = ''; // Standard-Farbe
+    timerProgressCircle.style.stroke = '';
   }
 }
 
-// Zustand: Übung LÄUFT
 function startExerciseState() {
   isRunning = true;
   isBreak = false;
@@ -290,7 +281,7 @@ function startExerciseState() {
 
     if (currentSeconds <= 0) {
       clearInterval(timer);
-      playModernConfirmSound(); // Modernen Bestätigungston abspielen
+      playModernConfirmSound();
       
       if (currentIndex < exercises.length - 1) {
         const customBreak = exercises[currentIndex].pause_after !== undefined ? exercises[currentIndex].pause_after : 20;
@@ -302,7 +293,6 @@ function startExerciseState() {
   }, 1000);
 }
 
-// Zustand: Übung PAUSIERT
 function pauseExerciseState() {
   isRunning = false;
   clearInterval(timer);
@@ -315,7 +305,6 @@ function pauseExerciseState() {
   }
 }
 
-// Zustand: Zwischenpause Phase
 function startBreakPhase(breakDuration) {
   isBreak = true;
   isRunning = false;
@@ -340,7 +329,6 @@ function startBreakPhase(breakDuration) {
   updateTimerDisplay();
 
   timer = setInterval(() => {
-    // Check für Renn-Start Töne in den letzten 3 Sekunden der Pause
     if (currentSeconds <= 3 && currentSeconds > 0) {
       playRaceStartSound(currentSeconds);
     }
@@ -357,7 +345,6 @@ function startBreakPhase(breakDuration) {
   }, 1000);
 }
 
-// Event-Handling
 function handlePlayToggle(e) {
   if (e) e.preventDefault();
   

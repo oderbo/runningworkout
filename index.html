@@ -9,16 +9,13 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
   <title>Running Workout App</title>
- <!-- Favicon für Browser-Tabs -->
- <link rel="icon" type="image/png" href="assets/icons/favicon.png">
-
-<!-- Apple Touch Icon (wird genutzt, wenn man die Seite zum iOS Home-Bildschirm hinzufügt) -->
-<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="assets/icons/favicon.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 </head>
 <body>
   <div class="app-container">
     
-    <!-- Start & Pause Overlay (Punkt 1) -->
+    <!-- Start & Pause Overlay -->
     <div id="start-overlay" class="start-overlay">
       <div class="ring-container play-ring" id="overlay-ring-container">
         <svg class="progress-ring" viewBox="0 0 120 120">
@@ -26,44 +23,45 @@
           <circle class="progress-ring__circle" id="overlay-progress-circle" cx="60" cy="60" r="52"></circle>
         </svg>
         <div class="ring-content" id="overlay-ring-content">
-          
-          <!-- Play-Status -->
           <button id="btn-overlay-play" class="play-btn">▶</button>
           
-          <!-- Pause-Status (Ergänzt für nahtlosen JS-Wechsel) -->
           <div id="pause-info" class="hidden" style="display: none; flex-direction: column; align-items: center;">
             <div class="pause-label">Pause</div>
             <div class="pause-countdown-text" id="pause-countdown">00:15</div>
           </div>
-
         </div>
       </div>
     </div>
 
-    <!-- Main App UI -->
+    <!-- Top Bar mit 3-Spalten Grid für exakte X-Achsen-Zentrierung -->
     <header class="top-bar">
-      <div class="roman-num" id="exercise-nr">I</div>
+      <div class="header-left">
+        <div class="roman-num" id="exercise-nr">I</div>
+        <div class="side-indicator" id="exercise-side">Seite:<br><span>LINKS</span></div>
+      </div>
       
-      <!-- Timer-Ring-Container (Punkt 5) -->
-      <div class="ring-container timer-ring">
-        <svg class="progress-ring" viewBox="0 0 120 120">
-          <circle class="progress-ring__circle-bg" cx="60" cy="60" r="52"></circle>
-          <circle class="progress-ring__circle" id="timer-progress-circle" cx="60" cy="60" r="52"></circle>
-        </svg>
-        <div class="ring-content">
-          <div class="timer-display" id="timer-display">00:30</div>
+      <div class="header-center">
+        <div class="ring-container timer-ring">
+          <svg class="progress-ring" viewBox="0 0 120 120">
+            <circle class="progress-ring__circle-bg" cx="60" cy="60" r="52"></circle>
+            <circle class="progress-ring__circle" id="timer-progress-circle" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="ring-content">
+            <div class="timer-display" id="timer-display">30</div>
+          </div>
         </div>
       </div>
 
-      <div class="reps-badge" id="exercise-umfang">20 WH</div>
+      <div class="header-right">
+        <div class="reps-display" id="exercise-umfang">20x</div>
+      </div>
     </header>
 
+    <!-- Main Content -->
     <main class="content-body">
-      <div class="side-indicator" id="exercise-side">SEITE: LINKS</div>
       <h1 class="exercise-title" id="exercise-title">Seitliches Beinheben im Liegen</h1>
       <p class="exercise-category" id="exercise-category">Hüftabduktion / Gluteus Medius</p>
 
-      <!-- Content Area & GIF Layout (Punkt 2 & 4) -->
       <div class="media-card">
         <img id="exercise-gif" src="assets/gifs/1.gif" alt="Übungsausführung" onerror="this.src='https://via.placeholder.com/400x400?text=GIF+Platzhalter'">
       </div>
@@ -71,6 +69,7 @@
       <p class="exercise-hint" id="exercise-hint">Mit Widerstandsband um die Sprunggelenke</p>
     </main>
 
+    <!-- Footer Controls -->
     <footer class="bottom-bar">
       <div class="next-preview">
         <span>Nächste Übung:</span>
