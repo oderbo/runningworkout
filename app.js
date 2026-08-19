@@ -66,9 +66,11 @@ let currentSeconds = 0;
 let totalSeconds = 0;
 let isRunning = false;
 let isBreak = false;
+let isInitialStart = true; // Zähler für initiale Startpause
 
 let audioCtx = null;
 
+// Direkt bei User-Klick aufrufen, um Audio-Berechtigung im Browser einzuholen
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -79,7 +81,6 @@ function initAudio() {
 }
 
 function playModernConfirmSound() {
-  initAudio();
   if (!audioCtx) return;
 
   const now = audioCtx.currentTime;
@@ -102,7 +103,6 @@ function playModernConfirmSound() {
 }
 
 function playRaceStartSound(secondsLeft) {
-  initAudio();
   if (!audioCtx) return;
 
   const now = audioCtx.currentTime;
@@ -111,7 +111,7 @@ function playRaceStartSound(secondsLeft) {
 
   osc.type = 'triangle';
 
-  if (secondsLeft > 1) {
+  if (secondsLeft > 0) {
     osc.frequency.setValueAtTime(440, now);
     gain.gain.setValueAtTime(0.1, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
@@ -263,11 +263,47 @@ function updateTimerDisplay() {
   }
 }
 
+function startInitialBreak(duration = 20) {
+  isBreak = true;
+  isRunning = false;
+  clearInterval(timer);
+
+  if (overlay) overlay.classList.add('hidden');
+  populateExerciseData(currentIndex);
+  freezeGif();
+
+  totalSeconds = duration;
+  currentSeconds = duration;
+
+  btnPlay.textContent = 'PAUSE ÜBERSPRINGEN';
+  btnPlay.style.backgroundColor = 'var(--card-bg)';
+  btnPlay.style.color = 'var(--text-primary)';
+
+  updateTimerDisplay();
+
+  timer = setInterval(() => {
+    if (currentSeconds <= 3 && currentSeconds > 0) {
+      playRaceStartSound(currentSeconds);
+    }
+
+    currentSeconds--;
+    updateTimerDisplay();
+
+    if (currentSeconds <= 0) {
+      clearInterval(timer);
+      playRaceStartSound(0);
+      totalSeconds = exercises[currentIndex].dauer;
+      currentSeconds = totalSeconds;
+      startExerciseState();
+    }
+  }, 1000);
+}
+
 function startExerciseState() {
   isRunning = true;
   isBreak = false;
   
-  if(overlay) overlay.classList.add('hidden');
+  if (overlay) overlay.classList.add('hidden');
   unfreezeGif();
 
   btnPlay.textContent = 'PAUSE';
@@ -338,6 +374,7 @@ function startBreakPhase(breakDuration) {
 
     if (currentSeconds <= 0) {
       clearInterval(timer);
+      playRaceStartSound(0);
       totalSeconds = exercises[currentIndex].dauer;
       currentSeconds = totalSeconds;
       startExerciseState(); 
@@ -348,6 +385,15 @@ function startBreakPhase(breakDuration) {
 function handlePlayToggle(e) {
   if (e) e.preventDefault();
   
+  // Wichtig: Schaltet den Web Audio Context direkt über das Klick-Event frei
+  initAudio();
+
+  if (isInitialStart) {
+    isInitialStart = false;
+    startInitialBreak(20);
+    return;
+  }
+
   if (isBreak) {
     clearInterval(timer);
     totalSeconds = exercises[currentIndex].dauer;
@@ -360,10 +406,12 @@ function handlePlayToggle(e) {
   }
 }
 
-if(btnOverlayPlay) btnOverlayPlay.addEventListener('click', handlePlayToggle);
+if (btnOverlayPlay) btnOverlayPlay.addEventListener('click', handlePlayToggle);
 btnPlay.addEventListener('click', handlePlayToggle);
 
 btnNext.addEventListener('click', () => {
+  initAudio();
+  isInitialStart = false;
   if (currentIndex < exercises.length - 1) {
     clearInterval(timer);
     currentIndex++;
@@ -372,6 +420,8 @@ btnNext.addEventListener('click', () => {
 });
 
 btnPrev.addEventListener('click', () => {
+  initAudio();
+  isInitialStart = false;
   if (currentIndex > 0) {
     clearInterval(timer);
     currentIndex--;
