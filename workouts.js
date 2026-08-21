@@ -68,7 +68,7 @@ const defaultWorkouts = {
   },
 workout2: {
     id: 'workout2',
-    name: "Oberkörper & Core (Legs Off)",
+    name: "Upper Body",
     icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
     exercises: [
       // Durchgang 1
@@ -92,15 +92,24 @@ workout2: {
       {"nr": "XVI", "satz": "2. Satz", "seite": "Beide", "titel": "Unterarmstütz auf Knien", "kategorie": "Gesamter Core", "umfang": "45 Sek", "hinweis": "Auf Ellbogen und Knien halten, Unterschenkel entspannt am Boden", "dauer": 45, "pause_after": 30, "id": 108}
     ]
   },
-  workout4: {
-    id: 'workout4',
-    name: "Express Unterkörper",
+  workout3: {
+    id: 'workout3',
+    name: "Warm Up",
     icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
     exercises: [
       {"nr": "I", "satz": "1. Satz", "seite": "Beide", "titel": "Beidbeinige Glute Bridge mit Band", "kategorie": "Gluteus Maximus / Abdruck", "umfang": "15 WH", "hinweis": "Band über Knie, Knie leicht nach außen drücken", "dauer": 30, "pause_after": 15, "id": 4},
       {"nr": "II", "satz": "1. Satz", "seite": "Beide", "titel": "Tibialisheber (Schienbeinheber)", "kategorie": "Schienbein (Tibialis Anterior)", "umfang": "20 WH", "hinweis": "An Wand gelehnt, Fußspitzen hochziehen", "dauer": 30, "pause_after": 15, "id": 10}
     ]
-  }
+  },
+  workout4: {
+    id: 'workout4',
+    name: "Cool Down",
+    icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+    exercises: [
+      {"nr": "I", "satz": "1. Satz", "seite": "Beide", "titel": "Beidbeinige Glute Bridge mit Band", "kategorie": "Gluteus Maximus / Abdruck", "umfang": "15 WH", "hinweis": "Band über Knie, Knie leicht nach außen drücken", "dauer": 30, "pause_after": 15, "id": 4},
+      {"nr": "II", "satz": "1. Satz", "seite": "Beide", "titel": "Tibialisheber (Schienbeinheber)", "kategorie": "Schienbein (Tibialis Anterior)", "umfang": "20 WH", "hinweis": "An Wand gelehnt, Fußspitzen hochziehen", "dauer": 30, "pause_after": 15, "id": 10}
+    ]
+  }  
 };
 
 // Berechnet die Gesamtdauer in Minuten (Übungsdauer + Pausen + 20s initialer Count-Down)
