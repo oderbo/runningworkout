@@ -13,8 +13,35 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 </head>
 <body>
-  <div class="app-container">
+
+  <!-- Haupt-Startmenü -->
+  <div id="start-menu-view" class="menu-container">
+    <header class="menu-header">
+      <div class="menu-title-wrap">
+        <h1>Workouts</h1>
+        <p class="menu-subtitle">Wähle dein Training</p>
+      </div>
+      <button id="btn-toggle-edit" class="icon-btn gear-btn" title="Namen bearbeiten">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <div id="edit-hint" class="edit-hint hidden">Klicke auf ein Workout, um den Namen zu ändern</div>
+
+    <div class="workout-grid" id="workout-grid">
+      <!-- Wird dynamsich per JS befüllt -->
+    </div>
+  </div>
+
+  <!-- Einzelnes Workout View (standardmäßig ausgeblendet) -->
+  <div id="workout-view" class="app-container hidden">
     
+    <!-- Exit / Menü Button oben links -->
+    <button id="btn-back-menu" class="btn-back">✕ Menü</button>
+
     <!-- Start & Pause Overlay -->
     <div id="start-overlay" class="start-overlay">
       <div class="ring-container play-ring" id="overlay-ring-container">
@@ -83,6 +110,7 @@
     </footer>
   </div>
 
+  <script src="workouts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
