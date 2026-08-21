@@ -123,14 +123,21 @@ function calculateWorkoutDurationInMinutes(exercises) {
   return Math.ceil(totalSeconds / 60);
 }
 
-// Names aus LocalStorage laden oder Defaults nehmen
 function getWorkoutName(workoutId) {
-  const savedNames = JSON.parse(localStorage.getItem('workout_names') || '{}');
-  return savedNames[workoutId] || defaultWorkouts[workoutId].name;
+  try {
+    const savedNames = JSON.parse(localStorage.getItem('workout_names') || '{}');
+    return savedNames[workoutId] || defaultWorkouts[workoutId]?.name || '';
+  } catch (e) {
+    return defaultWorkouts[workoutId]?.name || '';
+  }
 }
 
 function saveWorkoutName(workoutId, newName) {
-  const savedNames = JSON.parse(localStorage.getItem('workout_names') || '{}');
-  savedNames[workoutId] = newName;
-  localStorage.setItem('workout_names', JSON.stringify(savedNames));
+  try {
+    const savedNames = JSON.parse(localStorage.getItem('workout_names') || '{}');
+    savedNames[workoutId] = newName;
+    localStorage.setItem('workout_names', JSON.stringify(savedNames));
+  } catch (e) {
+    console.error("Fehler beim Speichern in localStorage:", e);
+  }
 }
