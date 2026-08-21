@@ -66,22 +66,30 @@ const defaultWorkouts = {
       {"nr": "LIX", "satz": "2. Satz", "seite": "R", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "pause_after": 10, "id": 14}
     ]
   },
-  workout2: {
+workout2: {
     id: 'workout2',
-    name: "Rumpf & Core Stabilität",
-    icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    name: "Oberkörper & Core (Legs Off)",
+    icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
     exercises: [
-      {"nr": "I", "satz": "1. Satz", "seite": "L", "titel": "Seitstütz mit Beinheben", "kategorie": "Rumpf- & Hüftstabilität", "umfang": "10 WH", "hinweis": "Seitstütz stabil halten", "dauer": 30, "pause_after": 10, "id": 6},
-      {"nr": "II", "satz": "1. Satz", "seite": "R", "titel": "Seitstütz mit Beinheben", "kategorie": "Rumpf- & Hüftstabilität", "umfang": "10 WH", "hinweis": "Seitstütz stabil halten", "dauer": 30, "pause_after": 10, "id": 6}
-    ]
-  },
-  workout3: {
-    id: 'workout3',
-    name: "Regeneration & Mobilisation",
-    icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
-    exercises: [
-      {"nr": "I", "satz": "1. Satz", "seite": "L", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "pause_after": 10, "id": 14},
-      {"nr": "II", "satz": "1. Satz", "seite": "R", "titel": "Couch Stretch", "kategorie": "Hüftbeuger & Oberschenkelvorderseite", "umfang": "30 Sek", "hinweis": "Knie an Wand, Oberkörper aufrichten", "dauer": 30, "pause_after": 10, "id": 14}
+      // Durchgang 1
+      {"nr": "I", "satz": "1. Satz", "seite": "Beide", "titel": "Sitzendes Band-Rudern", "kategorie": "Rücken & Latissimus", "umfang": "15 WH", "hinweis": "Sitzend am Boden, Band um Füße/Türanker, Beine völlig entspannt", "dauer": 40, "pause_after": 15, "id": 101},
+      {"nr": "II", "satz": "1. Satz", "seite": "Beide", "titel": "Liegende Band-Brustpresse", "kategorie": "Brust & Trizeps", "umfang": "15 WH", "hinweis": "In Rückenlage, Band hinter dem Rücken durchführen und nach oben drücken", "dauer": 40, "pause_after": 15, "id": 102},
+      {"nr": "III", "satz": "1. Satz", "seite": "Beide", "titel": "Sitzendes Band-Seitheben", "kategorie": "Schultern (Seitlicher Delta)", "umfang": "15 WH", "hinweis": "Auf Stuhl oder Boden sitzend, Band unter den Oberschenkeln einklemmen", "dauer": 35, "pause_after": 15, "id": 103},
+      {"nr": "IV", "satz": "1. Satz", "seite": "Beide", "titel": "Prone Cobra (Oberkörperheben)", "kategorie": "Oberer Rücken & Nacken", "umfang": "12 WH", "hinweis": "Bauchlage: Nur den Brustkorb anheben, Beine bleiben passiv am Boden", "dauer": 35, "pause_after": 15, "id": 104},
+      {"nr": "V", "satz": "1. Satz", "seite": "Beide", "titel": "Sitzende Biceps Curls mit Band", "kategorie": "Arme (Bizeps)", "umfang": "15 WH", "hinweis": "Sitzend, Band unter den Oberschenkeln fixieren", "dauer": 35, "pause_after": 10, "id": 105},
+      {"nr": "VI", "satz": "1. Satz", "seite": "Beide", "titel": "Überkopf-Trizepsdrücken im Sitzen", "kategorie": "Arme (Trizeps)", "umfang": "15 WH", "hinweis": "Sitzend, Band hinter dem Rücken fixieren und nach oben strecken", "dauer": 35, "pause_after": 15, "id": 106},
+      {"nr": "VII", "satz": "1. Satz", "seite": "Beide", "titel": "Klassische Crunches", "kategorie": "Gerader Bauch", "umfang": "20 WH", "hinweis": "Rückenlage, Füße locker abgelegt, nur den Schultergürtel anheben", "dauer": 40, "pause_after": 15, "id": 107},
+      {"nr": "VIII", "satz": "1. Satz", "seite": "Beide", "titel": "Unterarmstütz auf Knien", "kategorie": "Gesamter Core", "umfang": "45 Sek", "hinweis": "Auf Ellbogen und Knien halten, Unterschenkel entspannt am Boden", "dauer": 45, "pause_after": 20, "id": 108},
+
+      // Durchgang 2
+      {"nr": "IX", "satz": "2. Satz", "seite": "Beide", "titel": "Sitzendes Band-Rudern", "kategorie": "Rücken & Latissimus", "umfang": "15 WH", "hinweis": "Sitzend am Boden, Band um Füße/Türanker, Beine völlig entspannt", "dauer": 40, "pause_after": 15, "id": 101},
+      {"nr": "X", "satz": "2. Satz", "seite": "Beide", "titel": "Liegende Band-Brustpresse", "kategorie": "Brust & Trizeps", "umfang": "15 WH", "hinweis": "In Rückenlage, Band hinter dem Rücken durchführen und nach oben drücken", "dauer": 40, "pause_after": 15, "id": 102},
+      {"nr": "XI", "satz": "2. Satz", "seite": "Beide", "titel": "Sitzendes Band-Seitheben", "kategorie": "Schultern (Seitlicher Delta)", "umfang": "15 WH", "hinweis": "Auf Stuhl oder Boden sitzend, Band unter den Oberschenkeln einklemmen", "dauer": 35, "pause_after": 15, "id": 103},
+      {"nr": "XII", "satz": "2. Satz", "seite": "Beide", "titel": "Prone Cobra (Oberkörperheben)", "kategorie": "Oberer Rücken & Nacken", "umfang": "12 WH", "hinweis": "Bauchlage: Nur den Brustkorb anheben, Beine bleiben passiv am Boden", "dauer": 35, "pause_after": 15, "id": 104},
+      {"nr": "XIII", "satz": "2. Satz", "seite": "Beide", "titel": "Sitzende Biceps Curls mit Band", "kategorie": "Arme (Bizeps)", "umfang": "15 WH", "hinweis": "Sitzend, Band unter den Oberschenkeln fixieren", "dauer": 35, "pause_after": 10, "id": 105},
+      {"nr": "XIV", "satz": "2. Satz", "seite": "Beide", "titel": "Überkopf-Trizepsdrücken im Sitzen", "kategorie": "Arme (Trizeps)", "umfang": "15 WH", "hinweis": "Sitzend, Band hinter dem Rücken fixieren und nach oben strecken", "dauer": 35, "pause_after": 15, "id": 106},
+      {"nr": "XV", "satz": "2. Satz", "seite": "Beide", "titel": "Klassische Crunches", "kategorie": "Gerader Bauch", "umfang": "20 WH", "hinweis": "Rückenlage, Füße locker abgelegt, nur den Schultergürtel anheben", "dauer": 40, "pause_after": 15, "id": 107},
+      {"nr": "XVI", "satz": "2. Satz", "seite": "Beide", "titel": "Unterarmstütz auf Knien", "kategorie": "Gesamter Core", "umfang": "45 Sek", "hinweis": "Auf Ellbogen und Knien halten, Unterschenkel entspannt am Boden", "dauer": 45, "pause_after": 30, "id": 108}
     ]
   },
   workout4: {
